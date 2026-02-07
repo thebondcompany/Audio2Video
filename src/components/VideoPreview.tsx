@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function formatTime(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return "0:00";
@@ -46,7 +46,10 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
 
   const width = 1920;
   const height = 1080;
-  const layout: VideoLayout = { ...DEFAULT_LAYOUT, ...(branding.layout ?? {}) };
+  const layout = useMemo<VideoLayout>(
+    () => ({ ...DEFAULT_LAYOUT, ...(branding.layout ?? {}) }),
+    [branding.layout]
+  );
   layoutRef.current = layout;
   const logoScale = layout.logo.scale ?? 1;
   const logoSize = 120 * logoScale;
@@ -255,7 +258,7 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       if (ny >= barY - 0.02 && ny <= barY + 0.02) return "progressBar";
       return null;
     },
-    [layout, branding.logoUrl, branding.titleVisible, branding.progressBarVisible]
+    [layout, branding.logoUrl, branding.titleVisible, logoSize, width, height]
   );
 
   const handlePointerDown = useCallback(
@@ -325,10 +328,10 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       window.removeEventListener("pointerup", onUp);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [dragging, layout, onLayoutChange, getCanvasCoords]);
+  }, [dragging, layout, onLayoutChange, getCanvasCoords, logoSize, width, height]);
 
   const handleSeek = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (dragging) return;
       const audio = audioRef.current;
       if (!audio || !duration) return;
@@ -429,7 +432,11 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
 
       setExportProgress(95);
       const outData = await ffmpeg.readFile("output.mp4");
-      const outBlob = new Blob([outData], { type: "video/mp4" });
+      const blobPart: BlobPart =
+        outData instanceof Uint8Array
+          ? new Uint8Array(outData.slice())
+          : outData;
+      const outBlob = new Blob([blobPart], { type: "video/mp4" });
       const url = URL.createObjectURL(outBlob);
       const a = document.createElement("a");
       a.href = url;
@@ -458,7 +465,7 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       setExporting(false);
       setExportProgress(0);
     }
-  }, [duration, branding, segments, amplitudeCurve]);
+  }, [duration, branding, segments, amplitudeCurve, audioUrl]);
 
   const durationMinutes = duration > 0 ? duration / 60 : 0;
   const exportMin = durationMinutes <= 0 ? 0 : Math.max(1, Math.round(durationMinutes * 0.6));

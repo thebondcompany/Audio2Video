@@ -151,7 +151,6 @@ function runInWorker(
       }
     };
     worker.onerror = () => {
-      if (progressInterval) clearInterval(progressInterval);
       worker.terminate();
       reject(new Error("Transcription worker failed"));
     };
@@ -179,7 +178,7 @@ async function runOnMainThread(
   const transcriber = await pipeline(
     "automatic-speech-recognition",
     model,
-    { quantized: true, device: "wasm" }
+    { device: "wasm" }
   );
 
   report("transcribing", "Transcribing audio...", 15);
