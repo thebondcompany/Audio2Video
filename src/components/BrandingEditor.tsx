@@ -18,13 +18,13 @@ interface BrandingEditorProps {
 }
 
 export default function BrandingEditor({ branding, onChange }: BrandingEditorProps) {
-  const handleChange = (field: keyof BrandingTemplate, value: string | null) => {
+  const handleChange = (field: keyof BrandingTemplate, value: string | boolean | null) => {
     onChange({ ...branding, [field]: value });
   };
 
   const titleStyle: TitleStyle = branding.titleStyle ?? DEFAULT_TITLE_STYLE;
   const subtitleStyle = branding.subtitleStyle ?? DEFAULT_BRANDING.subtitleStyle;
-  const handleSubtitleStyle = (field: keyof SubtitleStyle, value: string | number) => {
+  const handleSubtitleStyle = (field: keyof SubtitleStyle, value: string | number | boolean) => {
     onChange({
       ...branding,
       subtitleStyle: { ...subtitleStyle, [field]: value },
@@ -171,6 +171,7 @@ export default function BrandingEditor({ branding, onChange }: BrandingEditorPro
         </div>
         <div className="flex items-center gap-3">
           {branding.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- user-uploaded data URL, not a static asset
             <img
               src={branding.logoUrl}
               alt="Logo"
@@ -503,6 +504,7 @@ export default function BrandingEditor({ branding, onChange }: BrandingEditorPro
           <label className="block text-xs font-medium text-slate-600 mb-2">Background image</label>
           <div className="flex items-center gap-3">
             {branding.videoBackgroundImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- user-uploaded data URL, not a static asset
               <img
                 src={branding.videoBackgroundImageUrl}
                 alt="Background"

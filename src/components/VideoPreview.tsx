@@ -255,7 +255,7 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       if (ny >= barY - 0.02 && ny <= barY + 0.02) return "progressBar";
       return null;
     },
-    [layout, branding.logoUrl, branding.titleVisible, branding.progressBarVisible]
+    [layout, branding.logoUrl, branding.titleVisible, branding.progressBarVisible, logoSize, width, height]
   );
 
   const handlePointerDown = useCallback(
@@ -325,10 +325,10 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       window.removeEventListener("pointerup", onUp);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [dragging, layout, onLayoutChange, getCanvasCoords]);
+  }, [dragging, layout, onLayoutChange, getCanvasCoords, logoSize, width, height]);
 
   const handleSeek = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (dragging) return;
       const audio = audioRef.current;
       if (!audio || !duration) return;
@@ -429,7 +429,11 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
 
       setExportProgress(95);
       const outData = await ffmpeg.readFile("output.mp4");
-      const outBlob = new Blob([outData], { type: "video/mp4" });
+      const blobPart: BlobPart =
+        outData instanceof Uint8Array
+          ? new Uint8Array(outData.slice())
+          : outData;
+      const outBlob = new Blob([blobPart], { type: "video/mp4" });
       const url = URL.createObjectURL(outBlob);
       const a = document.createElement("a");
       a.href = url;
@@ -458,7 +462,7 @@ export default function VideoPreview({ audioUrl, segments, branding, amplitudeCu
       setExporting(false);
       setExportProgress(0);
     }
-  }, [duration, branding, segments, amplitudeCurve]);
+  }, [duration, branding, segments, amplitudeCurve, audioUrl]);
 
   const durationMinutes = duration > 0 ? duration / 60 : 0;
   const exportMin = durationMinutes <= 0 ? 0 : Math.max(1, Math.round(durationMinutes * 0.6));
