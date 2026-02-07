@@ -1,22 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Required for FFmpeg.wasm (SharedArrayBuffer)
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
-          },
-        ],
-      },
-    ];
+  output: "export",
+  // Static export has no Image Optimization API; use unoptimized images.
+  images: { unoptimized: true },
+  // COOP/COEP for FFmpeg.wasm (SharedArrayBuffer): set in public/_headers for Cloudflare Pages.
+
+  // ONNX/transformers use import.meta; Terser breaks it when minifying. Disable for static build.
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.optimization.minimize = false;
+    }
+    return config;
   },
 };
 
